@@ -5,15 +5,25 @@ import { Activity } from '../models/activity';
 import NavBar from './NavBar';
 import ActivityDashboard from '../../features/activities/dashboard/ActivityDashboard';
 import {v4 as uuid} from 'uuid';
+import agent from '../api/agent';
+import LoadingComponent from './LoadingComponent';
  
 function App() {
   const [activities, setActivities] = useState<Activity[]>([]); //รู้ว่า array ของ Acitivity มีอะไรบ้างจาก json ที่ format มา
   const [selectedActivity, setSelectedActivity] = useState<Activity | undefined>(undefined); // ใช้ในการเลือก Activity ที่จะแสดงรายละเอียด
   const [editMode, setEditMode] = useState(false); // ใช้ในการแก้ไข Activity
+  const [loading, setLoading] = useState(true); // ใช้ในการโหลดข้อมูลจาก json มาแสดง  
+  const [submitting, setSubmitting] = useState(false); // ใช้ในการสร้าง Activity ใหม่ หรือแก้ไข Activity
 
   useEffect(() => {
-    axios.get<Activity[]>('http://localhost:5000/api/activities').then(response => {  //ใส่ไว้เพื่อเป็น Type Safety
-      setActivities(response.data);
+    agent.Activities.list().then(response => {
+      let activities: Activity[] = [];
+      response.forEach(activity => {
+        activity.date = activity.date.split('T')[0];
+        activities.push(activity);
+      })
+      setActivities(response);
+      setLoading(false);
     })
   }, []);
 
@@ -35,16 +45,36 @@ function App() {
   }
 
   function handleCreateOrEditActivity(activity: Activity){ // ใช้ในการสร้าง Activity ใหม่ หรือแก้ไข Activity
-    activity.id 
-    ? setActivities([...activities.filter(x => x.id !== activity.id), activity]) // ถ้ามี id ให้แก้ไข Activity ถ้าไม่มีให้สร้าง Activity ใหม่
-    : setActivities([...activities, {...activity, id: uuid()}]);
-    setEditMode(false);
-    setSelectedActivity(activity); 
+    setSubmitting(true);
+    if (activity.id){
+      agent.Activities.update(activity).then(() => {
+        setActivities([...activities.filter(x => x.id !== activity.id), activity]) // ถ้ามี id ให้แก้ไข Activity ถ้าไม่มีให้สร้าง Activity ใหม่
+        setSelectedActivity(activity); 
+        setEditMode(false);
+        setSubmitting(false);
+
+      })
+    } else{
+      activity.id = uuid();
+      agent.Activities.create(activity).then(() => {
+        setActivities([...activities, {...activity, id: uuid()}]);
+        setSelectedActivity(activity); 
+        setEditMode(false);
+        setSubmitting(false);
+
+      })
+    }
   }
 
   function handleDeleteActivity(id: string){
-    setActivities([...activities.filter(x => x.id !== id)]); // ฟังก์ชัน filter จะสร้างอาร์เรย์ใหม่ที่ประกอบด้วยกิจกรรมที่มี id ไม่เหมือนกับ id ของกิจกรรมที่ต้องการลบ และใช้ในการลบกิจกรรมนั้นออกจากอาร์เรย์ activities
+    setSubmitting(true);
+    agent.Activities.delete(id).then(() => {
+      setActivities([...activities.filter(x => x.id !== id)]); // ฟังก์ชัน filter จะสร้างอาร์เรย์ใหม่ที่ประกอบด้วยกิจกรรมที่มี id ไม่เหมือนกับ id ของกิจกรรมที่ต้องการลบ และใช้ในการลบกิจกรรมนั้นออกจากอาร์เรย์ activities
+      setSubmitting(false);
+    })
   }
+
+  if (loading) return <LoadingComponent content='Loading app'/>
 
   return (
 
@@ -61,6 +91,7 @@ function App() {
         closeForm={handleFormClose}
         createOrEdit={handleCreateOrEditActivity}
         deleteActivity={handleDeleteActivity}
+        submitting={submitting}
       />
       </Container>
     </>
