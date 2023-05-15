@@ -7,8 +7,11 @@ import ActivityDashboard from '../../features/activities/dashboard/ActivityDashb
 import {v4 as uuid} from 'uuid';
 import agent from '../api/agent';
 import LoadingComponent from './LoadingComponent';
+import { useStore } from '../stores/store';
+import { observer } from 'mobx-react-lite';
  
 function App() {
+  const {activityStore} = useStore(); // ใช้ในการเรียกใช้ activityStore จาก store.ts
   const [activities, setActivities] = useState<Activity[]>([]); //รู้ว่า array ของ Acitivity มีอะไรบ้างจาก json ที่ format มา
   const [selectedActivity, setSelectedActivity] = useState<Activity | undefined>(undefined); // ใช้ในการเลือก Activity ที่จะแสดงรายละเอียด
   const [editMode, setEditMode] = useState(false); // ใช้ในการแก้ไข Activity
@@ -16,16 +19,9 @@ function App() {
   const [submitting, setSubmitting] = useState(false); // ใช้ในการสร้าง Activity ใหม่ หรือแก้ไข Activity
 
   useEffect(() => {
-    agent.Activities.list().then(response => {
-      let activities: Activity[] = [];
-      response.forEach(activity => {
-        activity.date = activity.date.split('T')[0];
-        activities.push(activity);
-      })
-      setActivities(response);
-      setLoading(false);
-    })
-  }, []);
+    activityStore.loadActivities();
+
+  }, [activityStore]);
 
   function handleSelectActivity(id: string) { // ใช้ในการเลือก Activity ที่จะแสดงรายละเอียด
     setSelectedActivity(activities.find(x => x.id === id));
@@ -74,7 +70,7 @@ function App() {
     })
   }
 
-  if (loading) return <LoadingComponent content='Loading app'/>
+  if (activityStore.loadingIntial) return <LoadingComponent content='Loading app'/>
 
   return (
 
@@ -82,7 +78,7 @@ function App() {
       <NavBar openForm={handleFormOpen}/>
       <Container style={{marginTop: '7em'}}>
       <ActivityDashboard 
-        activities={activities}
+        activities={activityStore.activities}
         selectedActivity={selectedActivity}
         selectActivity={handleSelectActivity}
         cancelSelectActivity={handleCancelSelectActivity}
@@ -98,4 +94,4 @@ function App() {
   );
 }
 
-export default App;
+export default observer(App);
