@@ -2,16 +2,16 @@ import React, { SyntheticEvent, useState } from 'react';
 import { Button, Item, Label, Segment } from "semantic-ui-react";
 import { useStore } from '../../../app/stores/store';
 import { observer } from 'mobx-react-lite';
+import { Link } from 'react-router-dom';
 
 export default observer (function ActivityList() { // ใช้ destructuring แทนการใช้ props.activities
     const {activityStore} = useStore();
-    const {deleteActivity, loading, activitiesByDate} = activityStore;
+    const { loading, activitiesByDate} = activityStore;
     const [target, setTarget] = useState('');
     
     
     function handleActivityDelete(e: SyntheticEvent<HTMLButtonElement>, id: string) {
         setTarget(e.currentTarget.name);
-        deleteActivity(id);
     }
 
 
@@ -28,7 +28,7 @@ export default observer (function ActivityList() { // ใช้ destructuring �
                                 <div>{activity.city}, {activity.venue}</div>
                             </Item.Description>
                             <Item.Extra>
-                                <Button onClick={() => activityStore.selectActivity(activity.id)} floated='right' content='View' color='blue'/>
+                                <Button as={Link} to={`/activities/${activity.id}`} floated='right' content='View' color='blue'/>
                                 <Button
                                     name={activity.id}
                                     loading={loading && target === activity.id} 
