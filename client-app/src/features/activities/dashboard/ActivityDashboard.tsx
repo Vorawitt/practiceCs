@@ -1,17 +1,23 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Grid } from "semantic-ui-react";
 import ActivityList from "./ActivityList";
-import ActivityDetails from "../details/ActivityDetails";
-import ActivityForm from "../form/ActivityForm";
 import { useStore } from "../../../app/stores/store";
 import { observer } from "mobx-react-lite";
+import LoadingComponent from "../../../app/layout/LoadingComponent";
 
 
 export default observer(function ActivityDashboard() { // ใช้ destructuring แทนการใช้ props.activities
     
 
-const {activityStore} = useStore();
-const {selectedActivity, editMode} = activityStore;
+const {activityStore} = useStore(); 
+const {loadActivities, activityRegistry} = activityStore;
+
+useEffect(() => {
+    if  (activityRegistry.size <=1) loadActivities(); // ถ้ามี activity มากกว่า 1 ก็ไม่ต้อง loadActivities อีก
+}, [loadActivities,activityRegistry.size]);
+
+if (activityStore.loadingIntial) return <LoadingComponent content='Loading app'/>
+
 
 
 
@@ -21,10 +27,7 @@ const {selectedActivity, editMode} = activityStore;
                 <ActivityList/>
             </Grid.Column>    
             <Grid.Column width='6'>
-                {selectedActivity &&  !editMode && // ถ้ามี selectedActivity และไม่ได้เปิด editMode ให้แสดง ActivityDetails
-                <ActivityDetails />}
-                {editMode && 
-                <ActivityForm />}
+                <h2>Activity filters</h2>
             </Grid.Column>
         </Grid>
     )
