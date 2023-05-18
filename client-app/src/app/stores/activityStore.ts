@@ -19,6 +19,17 @@ export default class ActivityStore{
             Date.parse(a.date) - Date.parse(b.date));
     }
 
+    get groupedActivities() {
+        return Object.entries(
+            this.activitiesByDate.reduce((activities, activity) => { //เริ่มจากการ reduce กิจกรรมทั้งหมด โดยเริ่มจากการสร้าง object ที่มี key เป็นวันที่ และ value เป็นกิจกรรมทั้งหมดในวันนั้นๆ
+                const date = activity.date;
+                activities[date] = activities[date] ? [...activities[date], activity] : [activity]; //ถ้ามีกิจกรรมในวันนั้นอยู่แล้ว ก็ให้เพิ่มกิจกรรมใหม่เข้าไป ถ้าไม่มีกิจกรรมในวันนั้นอยู่ ก็ให้สร้างวันใหม่ขึ้นมา
+                return activities;
+            }, {} as {[key: string]: Activity[]})
+        )
+
+    }
+
     loadActivities = async () => {
         this.setLoadingInitial(true)
         try{
