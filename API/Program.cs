@@ -1,4 +1,5 @@
-using API.Extensions;
+using API.Extensions; // เพิ่มมาจากโฟลเดอร์ API
+using API.Middleware; // เพิ่มมาจากโฟลเดอร์ API
 using Application.Activities;
 using Application.Core;
 using MediatR;
@@ -15,6 +16,9 @@ builder.Services.AddApplicationServices(builder.Configuration);
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseMiddleware<ExceptionMiddleware>();
+
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
